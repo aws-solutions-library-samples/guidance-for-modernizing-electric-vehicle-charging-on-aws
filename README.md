@@ -8,7 +8,6 @@
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
 - [Simulating CP connectivity](#simulating-cp-connectivity)
-- [Conclusion](#conclusion)
 - [More things to try yourself](#more-things-to-try-yourself)
 - [Credits](#credits)
 - [License](#license)
@@ -311,16 +310,6 @@ When a CP sends a `BootNotification`, its hardware attributes are stored in a De
 - `--cp-model` - to set the model identification
 - `--cp-version` - to set the firmware version
 - `--cp-vendor` - to set the vendor name
-
-
-## Conclusion
-
-In this post, you learned how AWS Services can be used to build a highly-scalable, low-latency CPO. Using AWS Fargate, you deployed the OCPP Gateway, an OCPP-to-MQTT proxy, which allowed you to take advantage of AWS IoT Core's managed routing and scaling functionality to deploy and operate your Charge Point Operator solution on AWS. You learned how Rules for AWS IoT can be used to filter and route messages from the EV charge point to downstream AWS services like Amazon DynamoDB and AWS Lambda to create custom reporting and automated workflows.
-
-The solution and the sample code have been made [available as open-source](https://github.com/aws-samples/aws-ocpp-gateway) and can be readily adapted to your specific business needs.
-
-We hope you found this post informative and the walk-through helpful. As always, AWS welcomes feedback. Please feel free to connect/message the authors through their LinkedIn profiles include below.
-
 
 ## (Optional) More things to try yourself
 
