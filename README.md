@@ -1,32 +1,8 @@
 # Building an OCPP-Compliant electric vehicle charge point operator solution using AWS IoT Core
 
-The shift from fossil fuels to electric powered vehicles is a key component of government and commercial commitments to achieve net-zero emissions by 2050. It is projected that the United States alone will require a national network of at least 500,000 electric vehicle (EV) chargers by 2030 to support the projected number of EVs on the road [^1] [^2]. Globally, governments and industries are partnering to build millions of public charging and private fleet charging networks [^3].
+This solution demonstrates how you can use AWS to build a scalable CPO by deploying the OCPP Gateway to integrate with AWS IoT Core. The steps below will walk you through the deployment of an OCPP Gateway into your AWS account, will demonstrate how you can simulate CP message, and will provide examples of you how can act on those message using AWS resources.
 
-[^1]: https://www.whitehouse.gov/briefing-room/statements-releases/2023/02/15/fact-sheet-biden-harris-administration-announces-new-standards-and-major-progress-for-a-made-in-america-national-network-of-electric-vehicle-chargers/
-
-[^2]: https://www.mckinsey.com/industries/public-and-social-sector/our-insights/building-the-electric-vehicle-charging-infrastructure-america-needs
-
-[^3]: https://press.spglobal.com/2023-01-09-EV-Chargers-How-many-do-we-need
-
-Installing and powering the physical charging infrastructure is just the first step &mdash; chargers (Charge Points or "CP") need to be continuously monitored and managed by their operators (Charge Point Operators or "CPO"). CPOs are responsible for regular remote and on-site maintenance, collecting health metrics, and managing operational configurations. CPOs are also responsible for ensuring that the CPs are compatible with the latest industry standards and protocols, like [Open Charge Point Protocol(OCPP)](https://www.openchargealliance.org/) and [ISO 15118](https://www.iso.org/standard/77845.html). And all this must be implemented with security measures that can support CPs at scale.
-
-This post demonstrates how AWS services like AWS IoT Core, Amazon Elastic Container Service (Amazon ECS), and AWS Lambda can be used to build a highly-scalable, low-latency electric vehicle charge point operator system based on the EV industry standard, OCPP.
-
-## About AWS IoT Core
-
-[AWS IoT Core](https://aws.amazon.com/iot-core/) lets you connect billions of devices and route trillions of messages to and from AWS services without managing infrastructure. AWS IoT Core handles the heavy-lifting of scaling and message routing—making it easier for customers needing to support large fleets of remote devices, like CPs, communicating through publish-and-subscribe patterns. AWS IoT Core natively implements [MQTT](https://mqtt.org/), [HTTPS](https://docs.aws.amazon.com/iot/latest/developerguide/http.html), and MQTT over [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API), and can be adapted to support other protocols, like OCPP.
-
-
-## Overview
-
-Most commercially available CPs implement OCPP as a means of bi-directional publish-and-subscribe communication with a CPO. Operating a CPO on AWS requires the introduction of an OCPP WebSocket endpoint, with which CPs communicate. That endpoint, described here as the *OCPP Gateway*, acts as a proxy between OCPP and MQTT, enabling integration with AWS IoT Core and downstream CPO services built on AWS.
-
-The following architecture diagram illustrates the high-level end-to-end solution you will build in this blog post.
-
-| ![Figure 1: Charge Point OCPP message proxied to CPO Service via one-to-one relationship between WebSocket connection and MQTT topic](assets/diagrams/image_004.png) | 
-|:--:| 
-| *Figure 1: Charge Point OCPP message proxied to CPO Service via one-to-one relationship between WebSocket connection and MQTT topic* |
-
+For more information read the related [blog post](https://aws.amazon.com/blogs/iot/building-an-ocpp-compliant-electric-vehicle-charge-point-operator-solution-using-aws-iot-core/).
 
 ## Architecture
 
@@ -43,11 +19,6 @@ A [Network Load Balancer (NLB)](https://docs.aws.amazon.com/elasticloadbalancing
 When a CP establishes a socket connection with an instance of the OCPP Gateway, that Handler sets up an MQTT connection to AWS IoT Core using the CP’s unique identifier as the Thing ID. That client subscribes to MQTT message topics associated with that CP.
 
 The MQTT client implemented by the OCPP Gateway is socket aware, thereby providing a one-to-one association between the MQTT subscription and the CP. Any messages initiated by the CPO will be delivered to the MQTT client associated with the destination CP and forwarded over the socket to that CP. AWS IoT Core is highly elastic and will readily scale as more CPs are on-boarded.
-
-
-## Solution walk-through
-
-This solution demonstrates how you can use AWS to build a scalable CPO by deploying the OCPP Gateway to integrate with AWS IoT Core. The steps below will walk you through the deployment of an OCPP Gateway into your AWS account, will demonstrate how you can simulate CP message, and will provide examples of you how can act on those message using AWS resources.
 
 
 ### Prerequisites
