@@ -424,11 +424,18 @@ You can remove the OCPP Gateway Stack and all the associated resources created i
 npx cdk destroy
 ```
 
+## Credits
 
-## About the authors
+This sample was made possible thanks to the following libraries:
+- [ocpp](https://github.com/mobilityhouse/ocpp) from [Mobility House](https://github.com/mobilityhouse)
+- [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt) from [sbtinstruments](https://github.com/sbtinstruments)
 
-**Garry Galinsky** is a Principal Solutions Architect supporting Amazon on AWS. He is part of the effort to electrify Amazon's *Last Mile* delivery fleets across North America and Europe. [LinkedIn](https://www.linkedin.com/in/garrygalinsky)
 
-**Bigad Soleiman** is a Sr. Lead Prototyping Engineer on the AWS Prototyping Team. Leading largest and strategic AWS customers navigating complex core business problems from concept to production across multiple domains. [LinkedIn](https://ie.linkedin.com/in/bigadsoleiman)
+## License
 
-This post is a part of a broader effort to support the OCPP protocol on AWS. Special thanks to David Goehrig, Sergey Pugachev, Clement Rey, and Ozan Cihangir for their contributions to this effort.
+This library is licensed under the MIT-0 License. See the LICENSE file.
+
+- [Changelog](CHANGELOG.md) of the project.
+- [License](LICENSE) of the project.
+- [Code of Conduct](CODE_OF_CONDUCT.md) of the project.
+- [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
