@@ -1,5 +1,7 @@
 # Building an OCPP-Compliant electric vehicle charge point operator solution using AWS IoT Core
 
+Most commercially available CPs implement OCPP as a means of bi-directional publish-and-subscribe communication with a CPO. Operating a CPO on AWS requires the introduction of an OCPP WebSocket endpoint, with which CPs communicate. That endpoint, described here as the OCPP Gateway, acts as a proxy between OCPP and MQTT, enabling integration with AWS IoT Core and downstream CPO services built on AWS.
+
 This solution demonstrates how you can use AWS to build a scalable CPO by deploying the OCPP Gateway to integrate with AWS IoT Core. The steps below will walk you through the deployment of an OCPP Gateway into your AWS account, will demonstrate how you can simulate CP message, and will provide examples of you how can act on those message using AWS resources.
 
 For more information read the related [blog post](https://aws.amazon.com/blogs/iot/building-an-ocpp-compliant-electric-vehicle-charge-point-operator-solution-using-aws-iot-core/).
@@ -8,9 +10,9 @@ For more information read the related [blog post](https://aws.amazon.com/blogs/i
 
 The architecture diagram below depicts the resources that this solution will deploy into your account.
 
-| ![Figure 2: OCPP Gateway solution stack architecture](./assets/diagrams/image_006.png) |
+| ![Figure 1: OCPP Gateway solution stack architecture](./assets/diagrams/image_006.png) |
 |:--:| 
-| *Figure 2: OCPP Gateway solution stack architecture* |
+| *Figure 1: OCPP Gateway solution stack architecture* |
 
 The OCPP Gateway is deployed as an [Amazon ECS](https://aws.amazon.com/ecs/) application which can run on either [AWS Fargate](https://aws.amazon.com/fargate/) or [Amazon Elastic Compute Cloud (EC2)](https://aws.amazon.com/ec2/). AWS Fargate eliminates the need for infrastructure management and is the preferred option for this solution. Containerized applications can be scaled horizontally, allowing the OCPP Gateway to automatically scale up or down as the number of connected CPs changes. The long running nature of ECS tasks allows for WebSockets connections to be maintained for extended periods, reducing network traffic and connection overheads.
 
@@ -21,7 +23,7 @@ When a CP establishes a socket connection with an instance of the OCPP Gateway, 
 The MQTT client implemented by the OCPP Gateway is socket aware, thereby providing a one-to-one association between the MQTT subscription and the CP. Any messages initiated by the CPO will be delivered to the MQTT client associated with the destination CP and forwarded over the socket to that CP. AWS IoT Core is highly elastic and will readily scale as more CPs are on-boarded.
 
 
-### Prerequisites
+## Prerequisites
 
 Verify that your environment satisfies the following prerequisites:
 
