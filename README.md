@@ -1,5 +1,20 @@
 # Building an OCPP-Compliant electric vehicle charge point operator solution using AWS IoT Core
 
+
+## Table of content
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Deployment](#deployment)
+- [Simulating CP connectivity](#simulating-cp-connectivity)
+- [Conclusion](#conclusion)
+- [More things to try yourself](#more-things-to-try-yourself)
+- [Credits](#credits)
+- [License](#license)
+
+## Overview
+
 Most commercially available CPs implement OCPP as a means of bi-directional publish-and-subscribe communication with a CPO. Operating a CPO on AWS requires the introduction of an OCPP WebSocket endpoint, with which CPs communicate. That endpoint, described here as the OCPP Gateway, acts as a proxy between OCPP and MQTT, enabling integration with AWS IoT Core and downstream CPO services built on AWS.
 
 This solution demonstrates how you can use AWS to build a scalable CPO by deploying the OCPP Gateway to integrate with AWS IoT Core. The steps below will walk you through the deployment of an OCPP Gateway into your AWS account, will demonstrate how you can simulate CP message, and will provide examples of you how can act on those message using AWS resources.
@@ -39,6 +54,7 @@ You have:
 8. [Docker](https://docs.docker.com/get-docker/) installed
 9. [Python 3+](https://www.python.org/downloads/) installed
 
+## Deployment
 
 ### Prepare the CDK
 
