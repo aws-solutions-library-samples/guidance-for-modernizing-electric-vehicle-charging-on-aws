@@ -197,10 +197,6 @@ If you get an error like the one below:
 
 You could try to switch the default chip architecure for ECS from `ARM` to `X86_64` by uncommenting [this line](./bin/aws-ocpp-gateway.ts#L16) in [bin/aws-ocpp-gateway.ts](./bin/aws-ocpp-gateway.ts#L16)
 
-```bash
-docker version
-```
-
 ### Docker: failed to bundle asset
 If you get an error like the one below, then Docker is not running and need to be restarted:
 
