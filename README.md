@@ -7,7 +7,7 @@
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
-- [Troubleshooting] (#troubleshooting)
+- [Troubleshooting](#troubleshooting)
 - [Simulating CP connectivity](#simulating-cp-connectivity)
 - [More things to try yourself](#more-things-to-try-yourself)
 - [Credits](#credits)
