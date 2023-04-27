@@ -7,6 +7,7 @@
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
+- [Troubleshooting] (#troubleshooting)
 - [Simulating CP connectivity](#simulating-cp-connectivity)
 - [More things to try yourself](#more-things-to-try-yourself)
 - [Credits](#credits)
@@ -157,6 +158,59 @@ AwsOcppGatewayStack.loadBalancerDnsName = ocpp-gateway-xxxxxxx.elb.xx-xxxx-x.ama
 👉 AwsOcppGatewayStack.websocketURL = ws://ocpp-gateway-xxxxxxx.elb.xx-xxxx-x.amazonaws.com
 ...
 ```
+
+## Troubleshooting
+
+### Docker not running
+If you get an error like the one below, then Docker is not running and need to be restarted:
+
+```bash
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+```
+Verify that Docker is running with the following command:
+
+```bash
+docker version
+```
+
+If not, please [start your docker daemon](https://docs.docker.com/engine/reference/commandline/start/)
+
+### Docker not logged in
+If you get an error about your docker not being logged in chances are [you've previously authenticated to Amazon ECR Public](https://docs.aws.amazon.com/AmazonECR/latest/public/public-troubleshooting.html#public-troubleshooting-authentication) and your token has expired.
+
+To resolve this error it may be necessary to run the following command
+```bash
+docker logout public.ecr.aws
+```
+the try to deploy again.
+
+This will result in an unauthenticated pull and should resolve the error.
+
+### Docker image platform mismatch
+If you get an error like the one below:
+
+```bash
+...
+ ---> [Warning] The requested image's platform (linux/arm64/v8) does not match the detected host platform (linux/amd64) and no specific platform was requested
+...
+```
+
+You could try to switch the default chip architecure for ECS from `ARM` to `X86_64` by uncommenting [this line](./bin/aws-ocpp-gateway.ts#L16) in [bin/aws-ocpp-gateway.ts](./bin/aws-ocpp-gateway.ts#L16)
+
+```bash
+docker version
+```
+
+### Docker: failed to bundle asset
+If you get an error like the one below, then Docker is not running and need to be restarted:
+
+```bash
+...
+Failed to bundle asset [...], bundle output is located [...]: Error: docker exited with status 1
+...
+```
+
+chances are your docker install is using a WSL2 based engine, switching to Hyper-V should solve the issue.
 
 
 ## Simulating CP connectivity

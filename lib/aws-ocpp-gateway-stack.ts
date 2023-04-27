@@ -2,6 +2,7 @@ import * as actions from '@aws-cdk/aws-iot-actions-alpha';
 import * as iot_core from '@aws-cdk/aws-iot-alpha';
 import * as cdk from 'aws-cdk-lib';
 import { aws_secretsmanager, aws_iot as iot } from 'aws-cdk-lib';
+import { UlimitName } from "aws-cdk-lib/aws-ecs";
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -22,6 +23,7 @@ import fetch from 'sync-fetch';
 
 interface AwsOcppGatewayStackProps extends cdk.StackProps {
   domainName?: string;
+  architecture?: string;
 }
 
 export class AwsOcppGatewayStack extends cdk.Stack {
@@ -33,6 +35,10 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     const tlsPort = 443;
     const mqttPort = 8883;
     const ocppSupportedProtocols = ['ocpp1.6', 'ocpp2.0', 'ocpp2.0.1'];
+
+    const architecture = props?.architecture || 'arm64';
+    const cpuArchitecture = architecture == 'arm64' ? ecs.CpuArchitecture.ARM64: ecs.CpuArchitecture.X86_64;
+    const platform = architecture == 'arm64' ? ecr_assets.Platform.LINUX_ARM64 : ecr_assets.Platform.LINUX_AMD64;
 
     const defaultLambdaProps = {
       runtime: lambda.Runtime.PYTHON_3_9,
@@ -195,7 +201,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       },
     });
 
-    const iotCreateKeysAndCertificateCr = new cr.AwsCustomResource(this, 'CreateKeysAndCertificate', {
+    const iotCreateKeysAndCertificateCr = new cr.AwsCustomResource(this, 'KeysCerts', {
       policy: cr.AwsCustomResourcePolicy.fromStatements([
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -318,7 +324,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       executionRole: gatewayExecutionRole,
       runtimePlatform: {
         operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
-        cpuArchitecture: ecs.CpuArchitecture.ARM64,
+        cpuArchitecture: cpuArchitecture,
       },
     });
 
@@ -327,7 +333,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     });
 
     const gatewayContainerImage = new ecs.AssetImage(path.join(__dirname, '../src/ocpp-gateway-container'), {
-      platform: ecr_assets.Platform.LINUX_ARM64,
+      platform: platform,
     });
 
     const container = gatewayTaskDefinition.addContainer('Container', {
@@ -347,6 +353,12 @@ export class AwsOcppGatewayStack extends cdk.Stack {
         IOT_GATEWAY_PUBLIC_KEY: ecs.Secret.fromSecretsManager(iotPublicKeyStorage),
         IOT_GATEWAY_PRIVATE_KEY: ecs.Secret.fromSecretsManager(iotPrivateKeyStorage),
       },
+    });
+
+    container.addUlimits({
+      name: UlimitName.NOFILE,
+      softLimit:65536,
+      hardLimit:65536
     });
 
     container.addPortMappings({
