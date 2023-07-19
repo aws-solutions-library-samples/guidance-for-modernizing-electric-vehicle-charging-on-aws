@@ -1,1 +1,2 @@
-ocpp
+ocpp==0.18.0
+jsonschema==4.17.3
