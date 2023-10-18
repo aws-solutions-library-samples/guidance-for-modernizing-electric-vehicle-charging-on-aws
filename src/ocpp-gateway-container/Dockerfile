@@ -15,4 +15,5 @@ RUN . /opt/ocpp-gateway/bin/activate && pip install -r /opt/ocpp-gateway/require
 EXPOSE 80
 
 ENTRYPOINT /opt/ocpp-gateway/run-server.sh
+RUN chmod +x /opt/ocpp-gateway/run-server.sh
 CMD /opt/ocpp-gateway/run-server.sh
