@@ -21,5 +21,5 @@ new AwsOcppGatewayStack(app, 'AwsOcppGatewayStack', {
   // and create a certificate for it.
   // This will enable TLS for your gateway. (wss://gateway.yourdomain.com)
 
-  // domainName: 'yourdomain.com',
+  domainName: 'poweroneev.com',
 });
