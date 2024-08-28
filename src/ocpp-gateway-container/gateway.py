@@ -30,7 +30,8 @@ class Gateway(asyncio_mqtt.Client):
 
         if not self.charge_point_exists():
             error = (
-                f"Charge Point {self.charge_point_id} not registered as an IoT Thing"
+                f"Charge Point {self.charge_point_id} " +
+                "not registered as an IoT Thing"
             )
             raise ChargePointDoesNotExist(error)
 
@@ -59,10 +60,11 @@ class Gateway(asyncio_mqtt.Client):
         """Creates an SSL context for the MQTT client"""
         context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         context.verify_mode = ssl.CERT_REQUIRED
-        context.load_verify_locations(cafile="/etc/iot-certificates/AmazonRootCA1.pem")
+        context.load_verify_locations(
+            cafile="/home/appuser/iot-certificates/AmazonRootCA1.pem")
         context.load_cert_chain(
-            certfile="/etc/iot-certificates/iot.pem",
-            keyfile="/etc/iot-certificates/iot.key",
+            certfile="/home/appuser/iot-certificates/iot.pem",
+            keyfile="/home/appuser/iot-certificates/iot.key",
         )
         context.tls_version = ssl.PROTOCOL_TLSv1_2
         context.ciphers = None

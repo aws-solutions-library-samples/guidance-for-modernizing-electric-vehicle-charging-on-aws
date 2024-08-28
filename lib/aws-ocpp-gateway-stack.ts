@@ -2,7 +2,7 @@ import * as actions from '@aws-cdk/aws-iot-actions-alpha';
 import * as iot_core from '@aws-cdk/aws-iot-alpha';
 import * as cdk from 'aws-cdk-lib';
 import { aws_secretsmanager, aws_iot as iot } from 'aws-cdk-lib';
-import { UlimitName } from "aws-cdk-lib/aws-ecs";
+import { UlimitName } from 'aws-cdk-lib/aws-ecs';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -31,14 +31,20 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     super(scope, id, props);
 
     const vpcCidr = '10.0.0.0/16';
-    const tcpPort = 80;
+    const tcpPort = 8080;
     const tlsPort = 443;
     const mqttPort = 8883;
     const ocppSupportedProtocols = ['ocpp1.6', 'ocpp2.0', 'ocpp2.0.1'];
 
     const architecture = props?.architecture || 'arm64';
-    const cpuArchitecture = architecture == 'arm64' ? ecs.CpuArchitecture.ARM64: ecs.CpuArchitecture.X86_64;
-    const platform = architecture == 'arm64' ? ecr_assets.Platform.LINUX_ARM64 : ecr_assets.Platform.LINUX_AMD64;
+    const cpuArchitecture =
+      architecture == 'arm64'
+        ? ecs.CpuArchitecture.ARM64
+        : ecs.CpuArchitecture.X86_64;
+    const platform =
+      architecture == 'arm64'
+        ? ecr_assets.Platform.LINUX_ARM64
+        : ecr_assets.Platform.LINUX_AMD64;
 
     const defaultLambdaProps = {
       runtime: lambda.Runtime.PYTHON_3_9,
@@ -65,25 +71,30 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     });
 
     // Get the IoT endpoint
-    const iotDescribeEndpointCr = new cr.AwsCustomResource(this, 'IOTDescribeEndpoint', {
-      policy: cr.AwsCustomResourcePolicy.fromStatements([
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
-          actions: ['iot:DescribeEndpoint'],
-        }),
-      ]),
-      logRetention: logs.RetentionDays.ONE_DAY,
-      onUpdate: {
-        service: 'Iot',
-        action: 'describeEndpoint',
-        parameters: {
-          endpointType: 'iot:Data-ATS',
+    const iotDescribeEndpointCr = new cr.AwsCustomResource(
+      this,
+      'IOTDescribeEndpoint',
+      {
+        policy: cr.AwsCustomResourcePolicy.fromStatements([
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
+            actions: ['iot:DescribeEndpoint'],
+          }),
+        ]),
+        logRetention: logs.RetentionDays.ONE_DAY,
+        onUpdate: {
+          service: 'Iot',
+          action: 'describeEndpoint',
+          parameters: {
+            endpointType: 'iot:Data-ATS',
+          },
+          physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
         },
-        physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString()),
-      },
-    });
-    const iotEndpoint = iotDescribeEndpointCr.getResponseField('endpointAddress');
+      }
+    );
+    const iotEndpoint =
+      iotDescribeEndpointCr.getResponseField('endpointAddress');
 
     // create dynamodb table with encryption at rest for charge points list
     const chargePointTable = new dynamodb.Table(this, 'ChargePointTable', {
@@ -135,14 +146,18 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     new iot_core.TopicRule(this, 'CreateThingRule', {
       description: 'Insert new IOT Thing reference into DynamoDB',
       sql: iot_core.IotSql.fromStringAsVer20160323(
-        "SELECT thingName as chargePointId, timestamp FROM '$aws/events/thing/+/created'",
+        "SELECT thingName as chargePointId, timestamp FROM '$aws/events/thing/+/created'"
       ),
       actions: [new actions.DynamoDBv2PutItemAction(chargePointTable)],
     });
 
-    const deadLetterQueueForDeletedThings = new sqs.Queue(this, 'DeadLetterQueueForDeletedThings', {
-      enforceSSL: true,
-    });
+    const deadLetterQueueForDeletedThings = new sqs.Queue(
+      this,
+      'DeadLetterQueueForDeletedThings',
+      {
+        enforceSSL: true,
+      }
+    );
     const deletedThings = new sqs.Queue(this, 'DeletedThings', {
       enforceSSL: true,
       deadLetterQueue: {
@@ -154,7 +169,9 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     const deleteThing = new lambda.Function(this, 'DeleteThing', {
       ...defaultLambdaProps,
       handler: 'delete_thing.lambda_handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../src/iot-rule-delete-thing')),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, '../src/iot-rule-delete-thing')
+      ),
       environment: {
         DYNAMODB_CHARGE_POINT_TABLE: chargePointTable.tableName,
       },
@@ -167,7 +184,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     new iot_core.TopicRule(this, 'DeleteThingRule', {
       description: 'Delete an IOT Thing reference from DynamoDB',
       sql: iot_core.IotSql.fromStringAsVer20160323(
-        "SELECT thingName as chargePointId, timestamp FROM '$aws/events/thing/+/deleted'",
+        "SELECT thingName as chargePointId, timestamp FROM '$aws/events/thing/+/deleted'"
       ),
       actions: [new actions.SqsQueueAction(deletedThings)],
     });
@@ -201,37 +218,46 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       },
     });
 
-    const iotCreateKeysAndCertificateCr = new cr.AwsCustomResource(this, 'KeysCerts', {
-      policy: cr.AwsCustomResourcePolicy.fromStatements([
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
-          actions: ['iot:CreateKeysAndCertificate', 'iot:UpdateCertificate'],
-        }),
-      ]),
-      logRetention: logs.RetentionDays.ONE_DAY,
-      onCreate: {
-        service: 'Iot',
-        action: 'createKeysAndCertificate',
-        parameters: {
-          setAsActive: true,
+    const iotCreateKeysAndCertificateCr = new cr.AwsCustomResource(
+      this,
+      'KeysCerts',
+      {
+        policy: cr.AwsCustomResourcePolicy.fromStatements([
+          new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
+            actions: ['iot:CreateKeysAndCertificate', 'iot:UpdateCertificate'],
+          }),
+        ]),
+        logRetention: logs.RetentionDays.ONE_DAY,
+        onCreate: {
+          service: 'Iot',
+          action: 'createKeysAndCertificate',
+          parameters: {
+            setAsActive: true,
+          },
+          physicalResourceId:
+            cr.PhysicalResourceId.fromResponse('certificateId'),
         },
-        physicalResourceId: cr.PhysicalResourceId.fromResponse('certificateId'),
-      },
-      onDelete: {
-        service: 'Iot',
-        action: 'updateCertificate',
-        parameters: {
-          certificateId: new cr.PhysicalResourceIdReference(),
-          newStatus: 'INACTIVE',
+        onDelete: {
+          service: 'Iot',
+          action: 'updateCertificate',
+          parameters: {
+            certificateId: new cr.PhysicalResourceIdReference(),
+            newStatus: 'INACTIVE',
+          },
         },
-      },
-    });
+      }
+    );
 
-    const iotCertificatePem = iotCreateKeysAndCertificateCr.getResponseField('certificatePem');
-    const iotCertificateArn = iotCreateKeysAndCertificateCr.getResponseField('certificateArn');
-    const iotPublicKey = iotCreateKeysAndCertificateCr.getResponseField('keyPair.PublicKey');
-    const iotPrivateKey = iotCreateKeysAndCertificateCr.getResponseField('keyPair.PrivateKey');
+    const iotCertificatePem =
+      iotCreateKeysAndCertificateCr.getResponseField('certificatePem');
+    const iotCertificateArn =
+      iotCreateKeysAndCertificateCr.getResponseField('certificateArn');
+    const iotPublicKey =
+      iotCreateKeysAndCertificateCr.getResponseField('keyPair.PublicKey');
+    const iotPrivateKey =
+      iotCreateKeysAndCertificateCr.getResponseField('keyPair.PrivateKey');
 
     new cr.AwsCustomResource(this, 'AttachPolicyIOT', {
       policy: cr.AwsCustomResourcePolicy.fromStatements([
@@ -261,27 +287,47 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       },
     });
 
-    const amazonRootCA = fetch('https://www.amazontrust.com/repository/AmazonRootCA1.pem').text();
+    const amazonRootCA = fetch(
+      'https://www.amazontrust.com/repository/AmazonRootCA1.pem'
+    ).text();
 
-    const amazonRootCAStorage = new aws_secretsmanager.Secret(this, 'IOTAmazonRootCAStorage', {
-      secretStringValue: cdk.SecretValue.unsafePlainText(amazonRootCA),
-      description: 'Store the IOT PEM file for amazon root certificate',
-    });
+    const amazonRootCAStorage = new aws_secretsmanager.Secret(
+      this,
+      'IOTAmazonRootCAStorage',
+      {
+        secretStringValue: cdk.SecretValue.unsafePlainText(amazonRootCA),
+        description: 'Store the IOT PEM file for amazon root certificate',
+      }
+    );
 
-    const iotPemCertificateStorage = new aws_secretsmanager.Secret(this, 'IOTPemCertificate', {
-      secretStringValue: cdk.SecretValue.unsafePlainText(iotCertificatePem),
-      description: 'Store the IOT PEM certificate associated with the Gateway',
-    });
+    const iotPemCertificateStorage = new aws_secretsmanager.Secret(
+      this,
+      'IOTPemCertificate',
+      {
+        secretStringValue: cdk.SecretValue.unsafePlainText(iotCertificatePem),
+        description:
+          'Store the IOT PEM certificate associated with the Gateway',
+      }
+    );
 
-    const iotPublicKeyStorage = new aws_secretsmanager.Secret(this, 'IOTPublicCertificate', {
-      secretStringValue: cdk.SecretValue.unsafePlainText(iotPublicKey),
-      description: 'Store the IOT Public Key associated with the Gateway',
-    });
+    const iotPublicKeyStorage = new aws_secretsmanager.Secret(
+      this,
+      'IOTPublicCertificate',
+      {
+        secretStringValue: cdk.SecretValue.unsafePlainText(iotPublicKey),
+        description: 'Store the IOT Public Key associated with the Gateway',
+      }
+    );
 
-    const iotPrivateKeyStorage = new aws_secretsmanager.Secret(this, 'IOTPrivateCertificate', {
-      secretStringValue: cdk.SecretValue.unsafePlainText(iotPrivateKey),
-      description: 'Store the IOT PEM certificate associated with the Gateway',
-    });
+    const iotPrivateKeyStorage = new aws_secretsmanager.Secret(
+      this,
+      'IOTPrivateCertificate',
+      {
+        secretStringValue: cdk.SecretValue.unsafePlainText(iotPrivateKey),
+        description:
+          'Store the IOT PEM certificate associated with the Gateway',
+      }
+    );
 
     const cluster = new ecs.Cluster(this, 'Cluster', {
       vpc,
@@ -302,7 +348,11 @@ export class AwsOcppGatewayStack extends cdk.Stack {
 
     const gatewayExecutionRole = new iam.Role(this, 'ExecutionRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy')],
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AmazonECSTaskExecutionRolePolicy'
+        ),
+      ],
     });
 
     const ocppGatewayLogGroup = new logs.LogGroup(this, 'LogGroup', {
@@ -332,9 +382,12 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       name: 'iot-certificate-volume',
     });
 
-    const gatewayContainerImage = new ecs.AssetImage(path.join(__dirname, '../src/ocpp-gateway-container'), {
-      platform: platform,
-    });
+    const gatewayContainerImage = new ecs.AssetImage(
+      path.join(__dirname, '../src/ocpp-gateway-container'),
+      {
+        platform: platform,
+      }
+    );
 
     const container = gatewayTaskDefinition.addContainer('Container', {
       image: gatewayContainerImage,
@@ -349,16 +402,20 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       },
       secrets: {
         IOT_AMAZON_ROOT_CA: ecs.Secret.fromSecretsManager(amazonRootCAStorage),
-        IOT_GATEWAY_CERTIFICATE: ecs.Secret.fromSecretsManager(iotPemCertificateStorage),
-        IOT_GATEWAY_PUBLIC_KEY: ecs.Secret.fromSecretsManager(iotPublicKeyStorage),
-        IOT_GATEWAY_PRIVATE_KEY: ecs.Secret.fromSecretsManager(iotPrivateKeyStorage),
+        IOT_GATEWAY_CERTIFICATE: ecs.Secret.fromSecretsManager(
+          iotPemCertificateStorage
+        ),
+        IOT_GATEWAY_PUBLIC_KEY:
+          ecs.Secret.fromSecretsManager(iotPublicKeyStorage),
+        IOT_GATEWAY_PRIVATE_KEY:
+          ecs.Secret.fromSecretsManager(iotPrivateKeyStorage),
       },
     });
 
     container.addUlimits({
       name: UlimitName.NOFILE,
-      softLimit:65536,
-      hardLimit:65536
+      softLimit: 65536,
+      hardLimit: 65536,
     });
 
     container.addPortMappings({
@@ -381,7 +438,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     gatewaySecurityGroup.addIngressRule(
       ec2.Peer.ipv4(vpcCidr),
       ec2.Port.tcp(tcpPort),
-      'Allow TCP traffic from within VPC',
+      'Allow TCP traffic from within VPC'
     );
 
     const gatewayService = new ecs.FargateService(this, 'Service', {
@@ -422,7 +479,9 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       const gatewayDNSRecord = new route53.ARecord(this, 'DNSRecord', {
         zone,
         recordName,
-        target: route53.RecordTarget.fromAlias(new route53Targets.LoadBalancerTarget(loadBalancer)),
+        target: route53.RecordTarget.fromAlias(
+          new route53Targets.LoadBalancerTarget(loadBalancer)
+        ),
         deleteExisting: true,
       });
       gatewayDNSRecord.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
@@ -456,7 +515,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       // this is to enable testing the solutoin withut having to buy and configure a domain name
       // This is not recommended for production use.
       const http = loadBalancer.addListener('TCPListener', {
-        port: tcpPort,
+        port: 80,
         protocol: elbv2.Protocol.TCP,
       });
 
@@ -473,9 +532,13 @@ export class AwsOcppGatewayStack extends cdk.Stack {
       });
     }
 
-    const deadLetterQueueForIncomingMessages = new sqs.Queue(this, 'DeadLetterQueueForIncomingMessages', {
-      enforceSSL: true,
-    });
+    const deadLetterQueueForIncomingMessages = new sqs.Queue(
+      this,
+      'DeadLetterQueueForIncomingMessages',
+      {
+        enforceSSL: true,
+      }
+    );
     const incomingMessages = new sqs.Queue(this, 'IncomingMessagesQueue', {
       enforceSSL: true,
       deadLetterQueue: {
@@ -487,19 +550,28 @@ export class AwsOcppGatewayStack extends cdk.Stack {
     new iot_core.TopicRule(this, 'MessagesFromChargePointsRule', {
       description:
         'Insert messages coming from Charge Points into an SQS queue to be processed by the message processor',
-      sql: iot_core.IotSql.fromStringAsVer20160323("SELECT * as message,topic(1) as chargePointId FROM '+/in'"),
+      sql: iot_core.IotSql.fromStringAsVer20160323(
+        "SELECT * as message,topic(1) as chargePointId FROM '+/in'"
+      ),
       actions: [new actions.SqsQueueAction(incomingMessages)],
     });
 
     const messageProcessor = new lambda.Function(this, 'OCPPMessageProcessor', {
       ...defaultLambdaProps,
       handler: 'message_processor.lambda_handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../src/ocpp-message-processor'), {
-        bundling: {
-          image: lambda.Runtime.PYTHON_3_9.bundlingImage,
-          command: ['bash', '-c', 'pip install -r requirements.txt -t /asset-output && cp -au . /asset-output'],
-        },
-      }),
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, '../src/ocpp-message-processor'),
+        {
+          bundling: {
+            image: lambda.Runtime.PYTHON_3_9.bundlingImage,
+            command: [
+              'bash',
+              '-c',
+              'pip install -r requirements.txt -t /asset-output && cp -au . /asset-output',
+            ],
+          },
+        }
+      ),
     });
 
     messageProcessor.role?.attachInlinePolicy(
@@ -514,7 +586,7 @@ export class AwsOcppGatewayStack extends cdk.Stack {
             actions: ['iot:Publish'],
           }),
         ],
-      }),
+      })
     );
 
     const incomingMessageEvent = new lambdaes.SqsEventSource(incomingMessages);
