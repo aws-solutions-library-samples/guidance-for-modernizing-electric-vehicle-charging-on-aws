@@ -1,6 +1,5 @@
 # Building an OCPP-Compliant electric vehicle charge point operator solution using AWS IoT Core
 
-
 ## Table of content
 
 - [Overview](#overview)
@@ -10,12 +9,15 @@
 - [Troubleshooting](#troubleshooting)
 - [Simulating CP connectivity](#simulating-cp-connectivity)
 - [More things to try yourself](#more-things-to-try-yourself)
+- [Cost](#cost)
 - [Credits](#credits)
 - [License](#license)
 
 ## Overview
 
 Most commercially available CPs implement OCPP as a means of bi-directional publish-and-subscribe communication with a CPO. Operating a CPO on AWS requires the introduction of an OCPP WebSocket endpoint, with which CPs communicate. That endpoint, described here as the OCPP Gateway, acts as a proxy between OCPP and MQTT, enabling integration with AWS IoT Core and downstream CPO services built on AWS.
+
+This Guidance demonstrates how to build and modernize your electric vehicle (EV) charging station using AWS IoT Core. It highlights a modern Charging Station Management System (CSMS) built with serverless technologies, offering improved performance, lower costs, enhanced security, and compliance with the Open Charge Point Protocol (OCPP) for charger-to-cloud interoperability. The IoT Core and Lambda integration layer acts as a abstraction and translation service, enabling diverse charging stations to communicate with the CSMS seamlessly. This solves the interoperability challenge of integrating proprietary protocols and legacy systems, allowing the CSMS to work with any compliant charging station. By using this loosely coupled, event-driven architecture, the solution can scale to support a large network of charging stations while maintaining a consistent interface for the consuming applications. The Guidance helps establish a reliable, secure, highly available EV charging platform with 99.9% uptime, as required by law in certain countries. Designed for reduced operating expenses and supporting OCPP, the serverless CSMS helps ensure a seamless charging experience while meeting regulatory requirements.
 
 This solution demonstrates how you can use AWS to build a scalable CPO by deploying the OCPP Gateway to integrate with AWS IoT Core. The steps below will walk you through the deployment of an OCPP Gateway into your AWS account, will demonstrate how you can simulate CP message, and will provide examples of you how can act on those message using AWS resources.
 
@@ -26,8 +28,8 @@ For more information read the related [blog post](https://aws.amazon.com/blogs/i
 The architecture diagram below depicts the resources that this solution will deploy into your account.
 
 | ![Figure 1: OCPP Gateway solution stack architecture](./assets/diagrams/image_006.png) |
-|:--:| 
-| *Figure 1: OCPP Gateway solution stack architecture* |
+| :------------------------------------------------------------------------------------: |
+|                  *Figure 1: OCPP Gateway solution stack architecture*                  |
 
 The OCPP Gateway is deployed as an [Amazon ECS](https://aws.amazon.com/ecs/) application which can run on either [AWS Fargate](https://aws.amazon.com/fargate/) or [Amazon Elastic Compute Cloud (EC2)](https://aws.amazon.com/ec2/). AWS Fargate eliminates the need for infrastructure management and is the preferred option for this solution. Containerized applications can be scaled horizontally, allowing the OCPP Gateway to automatically scale up or down as the number of connected CPs changes. The long running nature of ECS tasks allows for WebSockets connections to be maintained for extended periods, reducing network traffic and connection overheads.
 
@@ -36,7 +38,6 @@ A [Network Load Balancer (NLB)](https://docs.aws.amazon.com/elasticloadbalancing
 When a CP establishes a socket connection with an instance of the OCPP Gateway, that Handler sets up an MQTT connection to AWS IoT Core using the CP’s unique identifier as the Thing ID. That client subscribes to MQTT message topics associated with that CP.
 
 The MQTT client implemented by the OCPP Gateway is socket aware, thereby providing a one-to-one association between the MQTT subscription and the CP. Any messages initiated by the CPO will be delivered to the MQTT client associated with the destination CP and forwarded over the socket to that CP. AWS IoT Core is highly elastic and will readily scale as more CPs are on-boarded.
-
 
 ## Prerequisites
 
@@ -133,8 +134,8 @@ npx cdk deploy
 3. You can view the progress of your CDK deployment in the [CloudFormation console](https://console.aws.amazon.com/cloudformation/home) in the selected region.
 
 | ![Screenshot: CloudFormation stack resources](assets/diagrams/screen_007.png) |
-|:--:|
-| *Screenshot: AWS CloudFormation stack resources* |
+| :---------------------------------------------------------------------------: |
+|               *Screenshot: AWS CloudFormation stack resources*                |
 
 4. Once deployed, take note of the `AwsOcppGatewayStack.websocketURL` value
 
@@ -162,6 +163,7 @@ AwsOcppGatewayStack.loadBalancerDnsName = ocpp-gateway-xxxxxxx.elb.xx-xxxx-x.ama
 ## Troubleshooting
 
 ### Docker not running
+
 If you get an error like the one below, then Docker is not running and need to be restarted:
 
 ```bash
@@ -176,17 +178,21 @@ docker version
 If not, please [start your docker daemon](https://docs.docker.com/engine/reference/commandline/start/)
 
 ### Docker not logged in
+
 If you get an error about your docker not being logged in chances are [you've previously authenticated to Amazon ECR Public](https://docs.aws.amazon.com/AmazonECR/latest/public/public-troubleshooting.html#public-troubleshooting-authentication) and your token has expired.
 
 To resolve this error it may be necessary to run the following command
+
 ```bash
 docker logout public.ecr.aws
 ```
+
 the try to deploy again.
 
 This will result in an unauthenticated pull and should resolve the error.
 
 ### Docker image platform mismatch
+
 If you get an error like the one below:
 
 ```bash
@@ -198,6 +204,7 @@ If you get an error like the one below:
 You could try to switch the default chip architecure for ECS from `ARM` to `X86_64` by uncommenting [this line](./bin/aws-ocpp-gateway.ts#L16) in [bin/aws-ocpp-gateway.ts](./bin/aws-ocpp-gateway.ts#L16)
 
 ### Docker: failed to bundle asset
+
 If you get an error like the one below:
 
 ```bash
@@ -208,11 +215,9 @@ Failed to bundle asset [...], bundle output is located [...]: Error: docker exit
 
 chances are your docker install is using a WSL2 based engine, switching to Hyper-V should solve the issue.
 
-
 ## Simulating CP connectivity
 
 We have provided the `simulate.py` Python script to help you test and explore the capability of the OCPP Gateway and AWS IoT Core without the need for a physical CP. Other OCPP simulators, like [OCPP-2.0-CP-Simulator](https://github.com/JavaIsJavaScript/OCPP-2.0-CP-Simulator), can also be used.
-
 
 ### Simulation setup
 
@@ -225,32 +230,34 @@ We have provided the `simulate.py` Python script to help you test and explore th
 > **Note**: Each EV Charge Point must map to a single IoT Thing. For our test, we'll set the Thing name as  `CP1`
 
 | ![Screenshot: Creating an IoT Thing](assets/diagrams/screen_001.png) |
-|:--:|
-| *Screenshot: Creating an IoT Thing* |
+| :------------------------------------------------------------------: |
+|                 *Screenshot: Creating an IoT Thing*                  |
 
 4. Choose **Next**
 
 5. For **Device certificate**, select **Skip creating a certificate at this time**, and choose **Create thing**
 
 | ![Screenshot: Skip the certification creation](assets/diagrams/screen_002.png) |
-|:--:|
-| *Screenshot: Skip the certification creation* |
+| :----------------------------------------------------------------------------: |
+|                 *Screenshot: Skip the certification creation*                  |
 
 6. Navigate to this folder with your terminal:
+
 ```bash
 cd ev-charge-point-simulator
 ```
 
-7. Create a Python virtual environment and activate it by running this command:
+1. Create a Python virtual environment and activate it by running this command:
+
 ```bash
 python3 -m venv venv && source venv/bin/activate
 ```
 
-8. Install the Python dependencies by running:
+1. Install the Python dependencies by running:
+
 ```bash
 pip3 install -r requirements.txt
 ```
-
 
 ### Simulate an EV charge point boot and heartbeat notification
 
@@ -259,8 +266,8 @@ The Python script simulates some basic functionality of an EV charge point:
 - Sending a [`BootNotification`](https://raw.githubusercontent.com/mobilityhouse/ocpp/master/docs/v201/OCPP-2.0.1_part2_specification.pdf#bootnotification), including attributes about the CP hardware
 - Sending [`Heartbeat`](https://raw.githubusercontent.com/mobilityhouse/ocpp/master/docs/v201/OCPP-2.0.1_part2_specification.pdf#heartbeat) messages based on a frequency instructed by the CPO (this is defined by the `interval` parameter returned in the response to the `BootNotification`)
 
-
 1. Run the Python script using the following command, making sure to replace the `--url` value with the `AwsOcppGatewayStack.websocketURL` returned from the cdk deployment:
+
 ```bash
 python3 simulate.py --url {websocket URL generated from the AWS OCPP Stack} --cp-id CP1 
 ```
@@ -281,7 +288,6 @@ INFO:ocpp:CP1: receive message [3,"9b7933a7-5216-496d-9bb0-dae45014bb98",{"curre
 
 This exchange represents a successful simulation of a CP, first sending a `BootNotification`, followed by subsequent `Heartbeat` at the specified interval. The output includes both the simulated OCPP message sent from the CP to AWS IoT (prefixed `send`) and the response received from AWS (prefixed `received message`).
 
-
 2. To simulate with a different CP, set a different value for the `--cp-id` argument.
 
 > **Note**: if the `--cp-id` value doesn't have a correspondent IoT Thing the OCPP Gateway will reject the connection. Here is an unsuccessful example passing `--cp-id CP2`, which is _not_ registered as a Thing in IoT:
@@ -291,7 +297,6 @@ This exchange represents a successful simulation of a CP, first sending a `BootN
 INFO:ocpp:CP2: send [2,"32dc5b6e-77b0-4105-b217-28e20b579ecc","BootNotification",{"chargingStation":{"model":"ABC 123 XYZ","vendorName":"Acme Electrical Systems","firmwareVersion":"10.9.8.ABC","serialNumber":"CP1234567890A01","modem":{"iccid":"891004234814455936F","imsi":"310410123456789"}},"reason":"PowerUp"}]
 ERROR:root:CP2: received 1008 (policy violation) Charge Point CP2 not registered as an IoT Thing; then sent 1008 (policy violation) Charge Point CP2 not registered as an IoT Thing
 ```
-
 
 ### Monitor OCPP activity in the AWS Console
 
@@ -312,11 +317,10 @@ Messages from and to the CP are brokered through AWS IoT Core. These messages ut
 ```
 
 | ![Screenshot: Subscribe to Topics](assets/diagrams/screen_004.png) |
-|:--:|
-| *Screenshot: Subscribe to Topics* |
+| :----------------------------------------------------------------: |
+|                 *Screenshot: Subscribe to Topics*                  |
 
 3. Run the Python script to simulate a CP and watch the messages in the MQTT test client
-
 
 ### Track EV Charge Point hardware attributes in device shadows
 
@@ -351,8 +355,8 @@ When a CP sends a `BootNotification`, its hardware attributes are stored in a De
 ```
 
 | ![Screenshot: IoT Thing shadow document](assets/diagrams/screen_003.png) |
-|:--:|
-| *Screenshot: IoT Thing shadow document* |
+| :----------------------------------------------------------------------: |
+|                 *Screenshot: IoT Thing shadow document*                  |
 
 5. Simulate different CP hardware attributes by passing these arguments into the `simulate.py` script and verify their affect on the Device Shadow:
 
@@ -414,15 +418,15 @@ WHERE get(*, 2) = 'Heartbeat'
 8. For **Action 1**, choose **DynamoDBv2**
 
 | ![Screenshot: IoT Rule SQL statement](assets/diagrams/screen_005.png) |
-|:--:|
-| *Screenshot: IoT Rule SQL statement* |
+| :-------------------------------------------------------------------: |
+|                 *Screenshot: IoT Rule SQL statement*                  |
 
 
 9. Select the Amazon DynamoDB table created above for **Table name**
 
 | ![Screenshot: IoT Rule action](assets/diagrams/screen_006.png) |
-|:--:|
-| *Screenshot: IoT Rule action* |
+| :------------------------------------------------------------: |
+|                 *Screenshot: IoT Rule action*                  |
 
 10. Select **Create new role**, provide the **Role name** `chargePointHeartbeat`, choose **Create**
 
@@ -433,7 +437,6 @@ WHERE get(*, 2) = 'Heartbeat'
 13. For **Tables**, choose the DynamoDB table created previously
 
 14. Run the Python script to simulate a CP and watch as heartbeat are added and update in the DynamoDB table
-
 
 ### Connection handling
 
@@ -465,10 +468,8 @@ Connected (press CTRL+C to quit)
 Disconnected (code: 1008, reason: "Charge Point CPX not registered as an IoT Thing")
 ```
 
-
-
-
 ## Clean up
+
 When you are done running simulations, deactivate the Python virtual environment (`venv`) by executing this command in your terminal:
 
 ```bash
@@ -481,12 +482,35 @@ You can remove the OCPP Gateway Stack and all the associated resources created i
 npx cdk destroy
 ```
 
+## Cost
+
+You are responsible for the cost of the AWS services used while running this solution guidance. As of August 2024, the cost for running this guidance with the default settings is $175 per month for 500 chargers.
+We recommend creating a [budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-create.html) through [AWS Cost Explorer](http://aws.amazon.com/aws-cost-management/aws-cost-explorer/) to help manage costs. Prices are subject to change. For full details, refer to the pricing webpage for each AWS service used in this Guidance.
+
+### Estimated monthly cost breakdown
+
+The following table provides a sample cost breakdown for deploying this guidance in the `us-east-2` region for one month operating 500 charges (**NOTE** the cost to scale this solution is not linear, doubling the number of chargers increases the cost by less than \$100). The AWS cost calculator is available [here](https://calculator.aws/#/estimate). Please note that these cost calculations are based on the default configuration options of the guidance deployment method described below.
+
+| **AWS service**                    | Dimensions               | Cost per **month** \[USD\] |
+| ---------------------------------- | ------------------------ | -------------------------- |
+| Amazon Elastic Compute Cloud (EC2) | NatGateway               | \$ 55                      |
+| IoT                                | AWS IoT                  | \$ 30                      |
+| Virtual Private Cloud (VPC)        | Public IPv4 Addresses    | \$ 25                      |
+| Elastic Load Balancing             | Network                  | \$ 20                      |
+| CloudWatch                         | Cloudwatch, PutLogEvents | \$ 20                      |
+| Simple Queue Service (SQS)         | SQS                      | \$ 10                      |
+| Data Transfer                      | Bandwidth                | \$ 7                       |
+| Lambda                             | ARM                      | \$ 4                       |
+| Secrets Manager                    | Secrets                  | \$ 2                       |
+| Route 53                           | 1 Hosted Zone            | \$ 1                       |
+| ECR                                | TimedStorage             | \$ 1                       |
+| **Total estimate**                 |                          | **\$175**                  |
+
 ## Credits
 
 This sample was made possible thanks to the following libraries:
 - [ocpp](https://github.com/mobilityhouse/ocpp) from [Mobility House](https://github.com/mobilityhouse)
 - [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt) from [sbtinstruments](https://github.com/sbtinstruments)
-
 
 ## License
 
