@@ -28,7 +28,11 @@ interface AwsOcppGatewayStackProps extends cdk.StackProps {
 
 export class AwsOcppGatewayStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: AwsOcppGatewayStackProps) {
-    super(scope, id, props);
+    super(scope, id, {
+      ...props,
+      description:
+        'SO9522: This stack deploys resources for OCPP Gateway application.',
+    });
 
     const vpcCidr = '10.0.0.0/16';
     const tcpPort = 8080;
