@@ -21,7 +21,7 @@
     "typescript": "~4.9.4"
   },
   "dependencies": {
-    "aws-cdk": "^2.135.0",
+    "aws-cdk": "^2.171.1",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
   }
