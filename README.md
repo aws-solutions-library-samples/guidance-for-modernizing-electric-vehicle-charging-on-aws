@@ -510,7 +510,7 @@ The following table provides a sample cost breakdown for deploying this guidance
 
 This sample was made possible thanks to the following libraries:
 - [ocpp](https://github.com/mobilityhouse/ocpp) from [Mobility House](https://github.com/mobilityhouse)
-- [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt) from [sbtinstruments](https://github.com/sbtinstruments)
+- [aiomqtt](https://github.com/empicano/aiomqtt) from [empicano](https://github.com/empicano)
 
 ## License
 
