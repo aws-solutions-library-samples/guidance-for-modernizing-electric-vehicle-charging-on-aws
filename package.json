@@ -12,7 +12,7 @@
   "devDependencies": {
     "@aws-cdk/aws-iot-actions-alpha": "2.135.0-alpha.0",
     "@aws-cdk/aws-iot-alpha": "2.135.0-alpha.0",
-    "@types/jest": "^29.4.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^18.11.18",
     "@types/sync-fetch": "^0.4.0",
     "aws-cdk-lib": "2.135.0",
